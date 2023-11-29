@@ -13,19 +13,14 @@ def xml_to_df(xml_root, table_name, df_columns):
     to a DataFrame.
     """
     rpd = pd.DataFrame()
-    
+
     for c in df_columns:
         
-        cl = []
-        
-        for field in xml_root.findall(table_name):
-            
-            cl.append(field.find(c).text)
-            
+        cl = [field.find(c).text for field in xml_root.findall(table_name)]
         cs = pd.Series(cl, name = c)
-   
+
         rpd = pd.concat([rpd, cs], axis = 1)
-    
+
     return rpd
 
 def get_GHGRP_records(reporting_year, table, rows = None):
@@ -36,7 +31,7 @@ def get_GHGRP_records(reporting_year, table, rows = None):
     V_GHG_EMITTER_FACILITIES.
     Optional argument to specify number of table rows.
     """
-    if table[0:14] == 'V_GHG_EMITTER_':
+    if table[:14] == 'V_GHG_EMITTER_':
         table_url = 'https://iaspub.epa.gov/enviro/efservice/' + \
             table + '/YEAR/' + str(reporting_year)
     else:
@@ -47,11 +42,7 @@ def get_GHGRP_records(reporting_year, table, rows = None):
 
     r_columns_root = et.fromstring(r_columns.content)
 
-    clist = []
-    
-    for child in r_columns_root[0]:
-        clist.append(child.tag)
-
+    clist = [child.tag for child in r_columns_root[0]]
     ghgrp = pd.DataFrame(columns = clist)
 
     if rows is None:
@@ -62,9 +53,9 @@ def get_GHGRP_records(reporting_year, table, rows = None):
             r.raise_for_status()
 
         if nrecords > 10000:
-            
+
             rrange = range(0, nrecords, 10000)
-            
+
             for n in range(len(rrange) - 1):
 
                 try:
@@ -99,29 +90,29 @@ def get_GHGRP_records(reporting_year, table, rows = None):
                 records_root = et.fromstring(r_records.content)
 
                 r_df = xml_to_df(records_root, table, ghgrp.columns)
-            
+
                 ghgrp = ghgrp.append(r_df)
-            
+
             except:
                 r_records.raise_for_status()
-        
 
-    
+
+
     else:
         try:
             r_records = requests.get(table_url + '/rows/0:' + str(rows))
-            
+
             records_root = et.fromstring(r_records.content)
-            
+
             r_df = xml_to_df(records_root, table, ghgrp.columns)
-            
+
             ghgrp = ghgrp.append(r_df)
-            
+
         except:
             r_records.raise_for_status()
-       
+
     ghgrp.drop_duplicates(inplace = True)
-    
+
     return ghgrp
 
     

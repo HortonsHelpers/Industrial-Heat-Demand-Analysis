@@ -95,13 +95,9 @@ def MMBTU_calc_AAff(GHGs_FF, EFs):
 
             if fuel_index.size > 0:
 
-                df_FF_energy.loc[fuel_index, (c[0:6] + '_MMBtu')] = \
-                    GHGs_FF.loc[fuel_index, c].divide(
-                        EFs.ix[ft]['CO2_kgCO2_per_mmBtu'], fill_value=0
-                        )
-            else:
-                pass
-
+                df_FF_energy.loc[fuel_index, c[:6] + '_MMBtu'] = GHGs_FF.loc[
+                    fuel_index, c
+                ].divide(EFs.ix[ft]['CO2_kgCO2_per_mmBtu'], fill_value=0)
     df_FF_energy.loc[:, 'MMBtu_TOTAL'] = df_FF_energy.sum(axis=1)
 
     df_FF_energy.drop(['TIER_1_MMBtu', 'TIER_2_MMBtu', 'TIER_3_MMBtu'],

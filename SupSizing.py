@@ -132,14 +132,10 @@ def AltES_Sizing(target_char, plot_load_figs=False):
             plt.close()
 
     if plot_load_figs == True:
-  
+
         for tf in [True, False]:   
             DemandCurve(tf, 'load')
             DemandCurve(tf, 'energy')
-
-    else:
-        pass
-
 
     def load_calcs(selection):
         """
@@ -156,7 +152,7 @@ def AltES_Sizing(target_char, plot_load_figs=False):
 
         load.loc[:, 't_max'] = \
             target_char.groupby('FACILITY_ID').Temp_degC.max()
-            
+
         return load
 
     # Estimate maximum load for only byproduct-excluded facilities over
@@ -170,7 +166,7 @@ def AltES_Sizing(target_char, plot_load_figs=False):
     # Note facilities that would need >1 SMR (i.e., max load > 600).
     supply_match = pd.DataFrame(index=alt_load.index, columns=char.keys()) 
 
-    for supply in char.keys():
+    for supply in char:
 
         s_index = alt_load[
             (alt_load.load_max.between(
@@ -189,7 +185,7 @@ def AltES_Sizing(target_char, plot_load_figs=False):
                 ].index
 
             supply_match.loc[smr_only_index, 'SMR_only'] = True
-            
+
             supply_match.SMR_only.fillna(False, inplace=True)
 
     # Note facilities that are above temperature range of SMRs and above load
@@ -199,9 +195,9 @@ def AltES_Sizing(target_char, plot_load_figs=False):
         'Load_Temp_match'] = False
 
     supply_match.Load_Temp_match.fillna(True, inplace=True)
-    
-    for supply in char.keys():
-        
+
+    for supply in char:
+
         supply_match[supply].fillna(False, inplace=True)
 
     # Add NAICS codes and descriptions
@@ -296,14 +292,14 @@ def MatchedSavings(supply_match, target_char):
                 pt_vals = None
 
                 d_name = 'ghg'
-                
+
             if s == 'SMR':
-                
+
                 smr_only_index = \
                     supply_match[supply_match.SMR_only == True].index
-                    
+
                 df.loc[smr_only_index, 'SMR_only'] = True
-                
+
                 pt = pt.append(pd.pivot_table(df[df.SMR_only == True], 
                                index=['SMR_only', 'REPORTING_YEAR'],
                                values=pt_vals, aggfunc=np.sum).rename(
@@ -316,7 +312,7 @@ def MatchedSavings(supply_match, target_char):
                     values=pt_vals, aggfunc=np.sum).rename(index={True: s})
                     )
 
-        if pt_vals == None:
+        if pt_vals is None:
 
             pt = pd.DataFrame(pt['MMTCO2E'])
 
@@ -340,8 +336,8 @@ def DrawMatchPlot(supply_match, all_load, year):
                }
 
     with plt.rc_context(dict(sns.axes_style("whitegrid"),
-                         **sns.plotting_context('talk'))
-                        ):
+                             **sns.plotting_context('talk'))
+                            ):
 
         loads = {}
         temps = {}
@@ -375,7 +371,7 @@ def DrawMatchPlot(supply_match, all_load, year):
 
             nc = nc + 1
 
-        for supply in char.keys():
+        for supply in char:
             patch = patches.Rectangle(
                 (char[supply]['load'][0], 0),
                 char[supply]['load'][1] - char[supply]['load'][0],

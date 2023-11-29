@@ -46,25 +46,16 @@ def fipfind(f, missingfips):
             params=payload
             )
 
-        fipfoud = r.json()['County']['FIPS']
-
-        return fipfoud
-
-    if ((missingfips.loc[f, 'ZIP'] > 1000) 
-
-        & (np.isnan(missingfips.loc[ f, 'COUNTY_FIPS'])==True) 
-
-        & (str(missingfips.loc[f, 'ZIP']) in z2f)):
-
-        fipfound = int(z2f[str(missingfips.loc[f,'ZIP'])])
-
-        return fipfound
-
-    else:
-
-        fipfound = 0
-
-        return fipfound
+        return r.json()['County']['FIPS']
+    return (
+        int(z2f[str(missingfips.loc[f, 'ZIP'])])
+        if (
+            (missingfips.loc[f, 'ZIP'] > 1000)
+            & (np.isnan(missingfips.loc[f, 'COUNTY_FIPS']) == True)
+            & (str(missingfips.loc[f, 'ZIP']) in z2f)
+        )
+        else 0
+    )
 
 def format_GHGRP_emissions(c_fuel_file, d_fuel_file):
     """
@@ -318,7 +309,7 @@ def MMBTU_calc_CO2(GHGs, c, EFs):
     """
     emissions = GHGs[c].fillna(0)*1000
 
-    name = GHGs[c].name[0:5]+'_MMBtu'
+    name = GHGs[c].name[:5] + '_MMBtu'
 
     df_energy = pd.DataFrame()
 
@@ -344,7 +335,7 @@ def MMBTU_calc_CH4(GHGs, c, EFs):
     """
     emissions = GHGs[c].fillna(0) * 1000000
 
-    name = GHGs[c].name[0:5] + '_MMBtu'
+    name = GHGs[c].name[:5] + '_MMBtu'
 
     df_energy = pd.DataFrame()
 
@@ -515,9 +506,9 @@ def id_industry_groups(GHGs):
 
         else:
 
-            gd_v.extend(w for w in v)
+            gd_v.extend(iter(v))
 
-            gd_k.extend(kname for w in v)
+            gd_k.extend(kname for _ in v)
 
     gd_df = pd.DataFrame(columns=('PNC_3', 'GROUPING'))
 
@@ -527,8 +518,7 @@ def id_industry_groups(GHGs):
 
     gd_df.set_index('PNC_3', inplace = True)
 
-    GHGs['PNC_3'] = \
-        GHGs['PRIMARY_NAICS_CODE'].apply(lambda n: int(str(n)[0:3]))
+    GHGs['PNC_3'] = GHGs['PRIMARY_NAICS_CODE'].apply(lambda n: int(str(n)[:3]))
 
     GHGs = pd.merge(GHGs, gd_df, left_on = GHGs.PNC_3, right_index=True)
 
@@ -540,16 +530,16 @@ def id_industry_groups(GHGs):
             )
 
     gd_df['IND'] = gd_df.GROUPING.apply(
-	    lambda x: x in [gd_df.loc[i,:].values[0] for i in gd_df.index if 
-		   ((str(i)[0] == '3') | (str(i)[0] == '1') | ((str(i)[0] == '2') & \
-            (str(i) != '221')))]
-            )
+    lambda x: x in [gd_df.loc[i,:].values[0] for i in gd_df.index if 
+    ((str(i)[0] == '3') | (str(i)[0] == '1') | ((str(i)[0] == '2') & \
+    (str(i) != '221')))]
+    )
 
     GHGs_E_dict = {}
 
     GHGs_GHG_dict = {}
 
-    g_names = ['Ind_' + str(GHGs.REPORTING_YEAR.drop_duplicates().values[0])]
+    g_names = [f'Ind_{str(GHGs.REPORTING_YEAR.drop_duplicates().values[0])}']
 
     for g_n in g_names:
 
@@ -564,7 +554,7 @@ def id_industry_groups(GHGs):
                 GHGs[(GHGs['REPORTING_YEAR']==int(g_n[-4:])) & 
                     (GHGs['MMBtu_TOTAL'] > 0)]
                 )
-                
+
     return GHGs
 
 #

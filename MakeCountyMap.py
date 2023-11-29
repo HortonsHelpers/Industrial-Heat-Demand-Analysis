@@ -53,37 +53,37 @@ class CountyEnergy_Maps(object):
             )
 
         paths = soup.findAll('path')
-        
-        if preset_bins == None:
+
+        if preset_bins is None:
 
             data_FJ = ps.Fisher_Jenks(  
                 self.county_data[variable].fillna(0), k = nbins
                 )
-        
+
         else:
-            
+
             data_FJ = preset_bins
 
         for p in paths:
-             
+
             if p['id'] not in ["State_Lines", "separator"]:
                 try:
                     value = self.data_dict[variable][int(p['id'])]
                 except:
                     continue
-                     
+
                 for n in range(int(nbins) - 2, -1, -1):
                     if value > data_FJ.bins[n]:
                         color_class = n + 1
                         break
                     else:
                         color_class = 0
-         
+
                 color = self.color_bins_hex[nbins][color_class]
 
                 p['style'] = self.path_style + color
 
-        mapfile = 'map_' + variable + '.svg'
+        mapfile = f'map_{variable}.svg'
 
         with open(mapfile, 'w') as file:
             file.write(soup.prettify())

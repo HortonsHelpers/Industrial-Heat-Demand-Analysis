@@ -34,11 +34,11 @@ def MatchMECS_NAICS_FT(DF, naics_column, MECS_NAICS, fuelxwalkDict,
         ].index
 
     nctest = [
-        DF.loc[DF_index, naics_column].dropna().apply(
-            lambda x: int(str(x)[
-                0:len(str(x)) - i
-            ])) for i in range(0, 4)
-        ]
+        DF.loc[DF_index, naics_column]
+        .dropna()
+        .apply(lambda x: int(str(x)[: len(str(x)) - i]))
+        for i in range(0, 4)
+    ]
 
     nctest = pd.concat(nctest, axis=1)
 
@@ -109,9 +109,9 @@ def enduse_calc(target_baseline, ihs_data, eu_file):
     """
 
     eu_dict = dict(pd.read_csv(eu_file, encoding='latin1').values)
-    
+
     hterms = ['furnace', 'kiln', 'dryer', 'heater', 'oven']
-  
+
     enduses = list(
         ihs_data['MECS'].index.get_level_values(1).drop_duplicates()
         )
@@ -167,12 +167,12 @@ def enduse_calc(target_baseline, ihs_data, eu_file):
 
             except IndexError:
                 pass
-  
+
             else:
                 other_heat = pd.DataFrame(FT_enduse[
                     FT_enduse.UNIT_TYPE == 'OCS (Other combustion source)'
                     ], copy=True)
-    
+
                 other_heat.rename(
                     columns={'UNIT_NAME': 'UNIT_NAME_og'}, inplace=True
                     )
@@ -188,7 +188,7 @@ def enduse_calc(target_baseline, ihs_data, eu_file):
                         )
 
                 other_heat.drop('UNIT_NAME', axis=1, inplace=True)
-            
+
                 for k, v in dict(
                     other_heat[other_heat.PH.notnull()]
                         [['FACILITY_ID', 'UNIT_NAME_og']].values).items():
@@ -207,7 +207,7 @@ def enduse_calc(target_baseline, ihs_data, eu_file):
                 )
 
             # FT_enduse.loc[FT_enduse.END_USE.isnull(), 'TJ'] = np.nan
-            
+
 #            FT_enduse.reset_index(inplace=True, drop=False)
 #            
 #            FT_enduse.set_index(['REPORTING_YEAR', 'FACILITY_ID'], drop=True,
@@ -236,10 +236,10 @@ def enduse_calc(target_baseline, ihs_data, eu_file):
 
             # Calculate end use energy for remaining unit types.
             if ihs_data['MECS'].ix[n][f].sum() > 0:
-               
+
                 # correction factor for energy use already assigned to an
                 # end use.
-              
+
 #                FT_enduse.reset_index(drop=False, inplace=True)
 #
 #                ft_corr = 1 - FT_enduse.groupby(
@@ -269,14 +269,11 @@ def enduse_calc(target_baseline, ihs_data, eu_file):
                     )
 
                 FT_enduse.rename(columns={'TJ': f}, inplace=True)
-                
+
                 target_enduse = target_enduse.append(
                     pd.concat([fac_eu, FT_enduse[FT_enduse.END_USE.notnull()]],
                     ignore_index=True)
                     )
-
-            else:
-                pass
 
     for c in ['REPORTING_YEAR', 'COUNTY_FIPS', 'FINAL_NAICS_CODE']:
         target_enduse.loc[:, c] = target_enduse[c].apply(lambda x: int(x))
@@ -390,16 +387,13 @@ def ghg_calc(efs_file, char_out, fuelxwalkDict):
             if ft in efs.index:
 
                 char_index = char_out[char_out[c] == ft].index
- 
+
                 char_out.loc[char_index, 'MMTCO2E'] = \
                     char_out.loc[char_index, fuelxwalkDict[ft]] * 947.817 * \
                     (efs.loc[ft, 'CO2_kgCO2_per_mmBtu'] +
                      efs.loc[ft, 'CH4_gCH4_per_mmBtu'] / 1000 * 25 + 
                      efs.loc[ft, 'N2O_gN2O_per_mmBtu'] / 1000 * 298
                      ) / 1000000000
-
-            else:
-                pass
 
     for c in ['COUNTY_FIPS', 'FACILITY_ID', 'REPORTING_YEAR', 'MECS_NAICS',
               'FINAL_NAICS_CODE']:

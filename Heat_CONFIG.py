@@ -5,6 +5,7 @@ Created on Mon Sep 11 14:56:19 2017
 @author: cmcmilla
 """
 
+
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
@@ -111,14 +112,13 @@ ID_NAICS = \
             ).values
         )
 
-for fid in ID_NAICS.keys():
-    
+for fid in ID_NAICS:
+
     target_ghgs.loc[
         target_ghgs[target_ghgs.FACILITY_ID == fid].index, 'FINAL_NAICS_CODE'
         ] =\
         ID_NAICS[fid]
-        
- # Drop non-target industry NAICS       
+
 target_ghgs = target_ghgs[target_ghgs.FINAL_NAICS_CODE.notnull()]
 
 target_ghg_summary = pd.DataFrame(target_ghgs, copy=True)
@@ -151,11 +151,7 @@ eu_results = \
 # aggregate categories.
 MECS_enduses_all = list(eu_results['target_enduse'].END_USE.drop_duplicates())
 
-eu_list = []
-
-for i in [1, 2, 4, 5, 6, 7, 8, 9]:
-    eu_list.append(MECS_enduses_all[i])
-
+eu_list = [MECS_enduses_all[i] for i in [1, 2, 4, 5, 6, 7, 8, 9]]
 eu_results['target_enduse'].loc[:, 'for_EU_sum'] = \
     eu_results['target_enduse'].END_USE.apply(lambda x: x in eu_list)
 
@@ -253,7 +249,7 @@ ff_savings_summ = pd.DataFrame(
         ['FINAL_NAICS_CODE', 'REPORTING_YEAR']
         ).sum()
         )
-        
+
 ff_savings_summ.loc[:, 'Savings %'] = \
     ff_savings_summ.Savings_Total.divide(
         ff_savings_summ.Original_Total, fill_value=0)
@@ -302,7 +298,7 @@ ff_dollar_savings = pd.pivot_table(
     values=['Coal', 'Diesel', 'LPG_NGL', 'Natural_gas', 'Residual_fuel_oil'],
     aggfunc=np.sum
     )
-    
+
 ff_dollar_savings = ff_prices.multiply(ff_dollar_savings)/1000000000
 
 ff_dollar_savings.loc[:, 'Total'] = ff_dollar_savings.sum(axis=1)
@@ -310,7 +306,7 @@ ff_dollar_savings.loc[:, 'Total'] = ff_dollar_savings.sum(axis=1)
 # National energy expenditures in $B
 total_exp = \
     np.array([1213.336, 1392.945, 1356.215, 1378.885, 1399.486, 1127.132])
-    
+
 ff_dollar_savings.loc[:, 'Fraction_US_Exp'] = \
     ff_dollar_savings.Total.divide(total_exp)*100
 
@@ -333,7 +329,7 @@ target_char.groupby(
 #        (target_energy.Biogenic == False)].groupby('TJ').sum())/1000], axis=1).sort_values(
 #            'Savings_Total', ascending=False
 #            )
- 
+
 
 # Create county map of average annual total GHG savings
 # First create mapping dataset
@@ -352,7 +348,7 @@ ID_FIPS_dict = dict(
 savings_map_data.loc[:, 'COUNTY_FIPS'] = savings_map_data.FACILITY_ID.apply(
     lambda x: ID_FIPS_dict[x]
     )
- 
+
 savings_map_data = savings_map_data[savings_map_data.COUNTY_FIPS !=0] 
 
 savings_map_data.dropna(subset=['savings_MMTCO2E_total'], axis=0, inplace=True)
@@ -371,19 +367,19 @@ for y in [2015]:
             'COUNTY_FIPS', as_index=False
             ).savings_MMTCO2E_total.sum()
         )
-        
+
 #    FJ_2011 = ps.Fisher_Jenks(
 #        savings_map_data_input.savings_MMTCO2E_total, k = 5
 #        )
 
     savings_map = MakeCountyMap.CountyEnergy_Maps(savings_map_data_input)
-    
+
     if y == 2015:
-        
+
         savings_map.make_map('savings_MMTCO2E_total', 5, FJ_2011)
-    
+
     else:
-        
+
         savings_map.make_map('savings_MMTCO2E_total', 5)
 
     print(np.round(
